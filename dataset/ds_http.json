@@ -1,0 +1,30 @@
+{
+	"name": "ds_http",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_httplinked",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"filename": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "HttpServerLocation",
+				"relativeUrl": {
+					"value": "prince3453/adf-awworks/refs/heads/main/dataset/@{dataset().filename}",
+					"type": "Expression"
+				}
+			},
+			"columnDelimiter": "\t",
+			"escapeChar": "\\",
+			"firstRowAsHeader": true,
+			"quoteChar": "\""
+		},
+		"schema": []
+	}
+}
