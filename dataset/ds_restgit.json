@@ -8,7 +8,7 @@
 		"annotations": [],
 		"type": "RestResource",
 		"typeProperties": {
-			"relativeUrl": "repos/prince3453/adf-awworks/contents/dataset/"
+			"relativeUrl": "repos/prince3453/adf-awworks/contents/dataset"
 		},
 		"schema": []
 	}
