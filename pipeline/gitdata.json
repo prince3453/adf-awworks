@@ -166,42 +166,20 @@
 				]
 			},
 			{
-				"name": "Lookup1",
-				"type": "Lookup",
-				"state": "Inactive",
-				"onInactiveMarkAs": "Succeeded",
-				"dependsOn": [],
-				"policy": {
-					"timeout": "0.12:00:00",
-					"retry": 0,
-					"retryIntervalInSeconds": 30,
-					"secureOutput": false,
-					"secureInput": false
-				},
-				"userProperties": [],
-				"typeProperties": {
-					"source": {
-						"type": "JsonSource",
-						"storeSettings": {
-							"type": "HttpReadSettings",
-							"requestMethod": "GET"
-						},
-						"formatSettings": {
-							"type": "JsonReadSettings"
-						}
-					}
-				}
-			},
-			{
-				"name": "ForEach1",
+				"name": "ForEachFile",
 				"type": "ForEach",
-				"state": "Inactive",
-				"onInactiveMarkAs": "Succeeded",
-				"dependsOn": [],
+				"dependsOn": [
+					{
+						"activity": "LookupFilename",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
 				"userProperties": [],
 				"typeProperties": {
 					"items": {
-						"value": "@activity('Lookup1').output.firstRow.name",
+						"value": "@activity('LookupFilename').output.value",
 						"type": "Expression"
 					},
 					"isSequential": true,
@@ -209,8 +187,6 @@
 						{
 							"name": "Copy_gitdata",
 							"type": "Copy",
-							"state": "Inactive",
-							"onInactiveMarkAs": "Succeeded",
 							"dependsOn": [],
 							"policy": {
 								"timeout": "0.12:00:00",
@@ -245,104 +221,6 @@
 								"enableStaging": false,
 								"translator": {
 									"type": "TabularTranslator",
-									"mappings": [
-										{
-											"source": {
-												"name": "ProductKey",
-												"type": "String",
-												"physicalType": "String"
-											},
-											"sink": {
-												"name": "ProductKey",
-												"type": "String",
-												"physicalType": "String"
-											}
-										},
-										{
-											"source": {
-												"name": "Product",
-												"type": "String",
-												"physicalType": "String"
-											},
-											"sink": {
-												"name": "Product",
-												"type": "String",
-												"physicalType": "String"
-											}
-										},
-										{
-											"source": {
-												"name": "Standard Cost",
-												"type": "String",
-												"physicalType": "String"
-											},
-											"sink": {
-												"name": "Standard Cost",
-												"type": "String",
-												"physicalType": "String"
-											}
-										},
-										{
-											"source": {
-												"name": "Color",
-												"type": "String",
-												"physicalType": "String"
-											},
-											"sink": {
-												"name": "Color",
-												"type": "String",
-												"physicalType": "String"
-											}
-										},
-										{
-											"source": {
-												"name": "Subcategory",
-												"type": "String",
-												"physicalType": "String"
-											},
-											"sink": {
-												"name": "Subcategory",
-												"type": "String",
-												"physicalType": "String"
-											}
-										},
-										{
-											"source": {
-												"name": "Category",
-												"type": "String",
-												"physicalType": "String"
-											},
-											"sink": {
-												"name": "Category",
-												"type": "String",
-												"physicalType": "String"
-											}
-										},
-										{
-											"source": {
-												"name": "Background Color Format",
-												"type": "String",
-												"physicalType": "String"
-											},
-											"sink": {
-												"name": "Background Color Format",
-												"type": "String",
-												"physicalType": "String"
-											}
-										},
-										{
-											"source": {
-												"name": "Font Color Format",
-												"type": "String",
-												"physicalType": "String"
-											},
-											"sink": {
-												"name": "Font Color Format",
-												"type": "String",
-												"physicalType": "String"
-											}
-										}
-									],
 									"typeConversion": true,
 									"typeConversionSettings": {
 										"allowDataTruncation": true,
@@ -356,7 +234,7 @@
 									"type": "DatasetReference",
 									"parameters": {
 										"filename": {
-											"value": "@item()",
+											"value": "@item().name",
 											"type": "Expression"
 										}
 									}
@@ -368,7 +246,7 @@
 									"type": "DatasetReference",
 									"parameters": {
 										"filename": {
-											"value": "@item()",
+											"value": "@item().name",
 											"type": "Expression"
 										}
 									}
@@ -379,8 +257,8 @@
 				}
 			},
 			{
-				"name": "Web1",
-				"type": "WebActivity",
+				"name": "CopyJsonData",
+				"type": "Copy",
 				"dependsOn": [],
 				"policy": {
 					"timeout": "0.12:00:00",
@@ -391,8 +269,76 @@
 				},
 				"userProperties": [],
 				"typeProperties": {
-					"method": "GET",
-					"url": "https://api.github.com/repos/prince3453/adf-awworks/contents/dataset/"
+					"source": {
+						"type": "RestSource",
+						"httpRequestTimeout": "00:01:40",
+						"requestInterval": "00.00:00:00.010",
+						"requestMethod": "GET",
+						"paginationRules": {
+							"supportRFC5988": "true"
+						}
+					},
+					"sink": {
+						"type": "JsonSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings",
+							"copyBehavior": "MergeFiles"
+						},
+						"formatSettings": {
+							"type": "JsonWriteSettings"
+						}
+					},
+					"enableStaging": false
+				},
+				"inputs": [
+					{
+						"referenceName": "ds_restgit",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "ds_filename",
+						"type": "DatasetReference"
+					}
+				]
+			},
+			{
+				"name": "LookupFilename",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "CopyJsonData",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "JsonSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "JsonReadSettings"
+						}
+					},
+					"dataset": {
+						"referenceName": "Ds_Filename_Json",
+						"type": "DatasetReference"
+					},
+					"firstRowOnly": false
 				}
 			}
 		],
